@@ -14,7 +14,7 @@ HARDWARE_NAME="generic_amd64"
 ROOTFS_PART_MOUNTPOINT="/mnt/$HARDWARE_NAME/partroot"
 ROOTFS_BINDMOUNTS="$ROOTFS_PART_MOUNTPOINT"
 EFI_PART_MOUNTPOINT="$ROOTFS_PART_MOUNTPOINT/boot/efi"
-
+WORKING_DIR=""
 loopdev=""
 DEBUG_BUILD=0
 ENABLE_DOCKER=0
@@ -87,6 +87,7 @@ function umountBindMounts(){
 
 function addFilesForChroot(){
         echo "AAR-OS" > etc/hostname
+        echo "/dev/sda2 / defaults,noatime 0 1" > etc/fstab
         echo "127.0.0.1 localhost" > etc/hosts
         echo "127.0.1.1 AAR-OS" >> etc/hosts
         echo "nameserver 8.8.8.8" > etc/resolv.conf
@@ -112,9 +113,9 @@ function addFilesForChroot(){
         echo "echo 'tzdata tzdata/Zones/Africa select Johannesburg' | debconf-set-selections" >> tmp/inside_chroot.sh
         echo "echo 'Installing system packages...' " >> tmp/inside_chroot.sh
 
-        echo "DEBIAN_FRONTEND=noninteractive apt install -y linux-image-generic grub-efi-amd64" >> tmp/inside_chroot.sh
+        echo "DEBIAN_FRONTEND=noninteractive apt install -y rsync linux-image-generic grub-efi-amd64" >> tmp/inside_chroot.sh
 
-        echo "DEBIAN_FRONTEND=noninteractive apt install -y ca-certificates bridge-utils curl gnupg tzdata net-tools network-manager modemmanager iputils-ping apt-utils openssh-server kmod systemd-sysv nano vim dialog sudo rauc rauc-service libubootenv-tool mmc-utils wireless-regdb iw fdisk iproute2" >> tmp/inside_chroot.sh
+        echo "DEBIAN_FRONTEND=noninteractive apt install -y dosfstools ca-certificates bridge-utils curl gnupg tzdata net-tools network-manager modemmanager iputils-ping apt-utils openssh-server kmod systemd-sysv nano vim dialog sudo rauc rauc-service libubootenv-tool mmc-utils wireless-regdb iw fdisk iproute2" >> tmp/inside_chroot.sh
         if [ $DEBUG_BUILD -eq 1 ];
         then
                 echo "DEBUG_BUILD pragma is enabled."
@@ -224,12 +225,15 @@ else
         fi
 fi
 
-
 cd $ROOTFS_PART_MOUNTPOINT
 ROOTFS_BINDMOUNTS=$(pwd)
 echo "Extracting rootfs..."
 tar -xf ../$ROOTFS_BASE_NAME
 echo "-----------------------------------------------"
+
+echo "Transferring scripts..."
+cp -r $WORKING_DIR/installOS.sh $ROOTFS_PART_MOUNTPOINT/usr/bin/
+chmod +x $ROOTFS_PART_MOUNTPOINT/usr/bin/installOS.sh
 
 echo "Setting up auto-install script in chroot jail"
 addFilesForChroot
@@ -247,5 +251,8 @@ echo "-----------------------------------------------"
 echo "Unmounting disk image..."
 
 cleanup
+
+#Compress the file for faster transfer
+7z -mmt=12 -mx=5 a "${DISK_IMAGE_NAME}.7z" $DISK_IMAGE_NAME
 
 echo "Done."
