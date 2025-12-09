@@ -94,10 +94,10 @@ function addFilesForChroot(){
         mkdir -p etc/apt/apt.conf.d/
         echo 'Acquire::ForceIPv4 "true";' > etc/apt/apt.conf.d/99settings
         echo 'Acquire::Retries "5";' > etc/apt/apt.conf.d/99settings
-        echo "deb [trusted=yes] http://ubuntu.mirror.ac.za/ubuntu jammy main restricted universe multiverse" > etc/apt/sources.list
-        echo "deb [trusted=yes] http://ubuntu.mirror.ac.za/ubuntu jammy-updates main restricted universe multiverse" >> etc/apt/sources.list
-        echo "deb [trusted=yes] http://ubuntu.mirror.ac.za/ubuntu jammy-backports main restricted universe multiverse" >> etc/apt/sources.list
-        echo "deb [trusted=yes] http://ubuntu.mirror.ac.za/ubuntu jammy-security main restricted universe multiverse" >> etc/apt/sources.list
+        echo "deb [trusted=yes] http://archive.ubuntu.com/ubuntu jammy main restricted universe multiverse" > etc/apt/sources.list
+        echo "deb [trusted=yes] http://archive.ubuntu.com/ubuntu jammy-updates main restricted universe multiverse" >> etc/apt/sources.list
+        echo "deb [trusted=yes] http://archive.ubuntu.com/ubuntu jammy-backports main restricted universe multiverse" >> etc/apt/sources.list
+        echo "deb [trusted=yes] http://archive.ubuntu.com/ubuntu jammy-security main restricted universe multiverse" >> etc/apt/sources.list
 
         if [ $ENABLE_DOCKER -eq 1 ];
         then
@@ -135,6 +135,9 @@ function addFilesForChroot(){
                 echo "Installing snapd..."
                 echo "DEBIAN_FRONTEND=noninteractive apt install -y snapd" >> tmp/inside_chroot.sh
         fi
+        echo "echo 'Force-loading required modules into initramfs'" >> tmp/inside_chroot.sh
+        echo "echo -e 'ext4\nsd_mod\nahci\nvirtio_blk\nvirtio_pci\nvirtio_scsi' >> /etc/initramfs-tools/modules" >> tmp/inside_chroot.sh
+        echo "update-initramfs -u" >> tmp/inside_chroot.sh
         echo "echo 'Install grub...'" >> tmp/inside_chroot.sh
         echo "grub-install --target=x86_64-efi --efi-directory=/boot/efi --bootloader-id=ubuntu --recheck" >> tmp/inside_chroot.sh
         echo "echo 'Ensuring GRUB_DISABLE_OS_PROBER=true is set...'" >> tmp/inside_chroot.sh
