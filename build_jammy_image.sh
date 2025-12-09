@@ -87,7 +87,7 @@ function umountBindMounts(){
 
 function addFilesForChroot(){
         echo "AAR-OS" > etc/hostname
-        echo "/dev/sda2 / defaults,noatime 0 1" > etc/fstab
+        echo "/dev/sda2 / ext4 defaults,noatime 0 1" > etc/fstab
         echo "127.0.0.1 localhost" > etc/hosts
         echo "127.0.1.1 AAR-OS" >> etc/hosts
         echo "nameserver 8.8.8.8" > etc/resolv.conf
